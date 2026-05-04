@@ -114,11 +114,11 @@ function adaptarVoos(apiVoos) {
         calco: isHorarioValido(calco) ? calco : null,
 
         s: {
-          limpeza: Number(v.tempo) < 0 ? 'NAO' : 'ESC',
-          qtu: 'ESC',
-          qta: 'ESC',
-          fonia: 'ESC',
-          smartfuel: 'ESC',
+            limpeza: 'ESC',
+            qtu: 'ESC',
+            qta: 'ESC',
+            fonia: 'ESC',
+            smartfuel: 'ESC',
         },
       };
     })
