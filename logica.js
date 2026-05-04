@@ -105,22 +105,21 @@ function adaptarVoos(apiVoos) {
       const data = montarDataHojePorHorario(horario);
 
       if (!data) return null;
-      if (!estaNaJanelaOperacional(data)) return null;
 
       return {
-        id: String(v.voo || '').trim(),
-        route: String(v.origem || '').trim(),
-        t: data,
-        calco: isHorarioValido(calco) ? calco : null,
-
-        s: {
-            limpeza: 'ESC',
-            qtu: 'ESC',
-            qta: 'ESC',
-            fonia: 'ESC',
-            smartfuel: 'ESC',
-        },
-      };
+              id: String(v.voo || '').trim(),
+              voo: String(v.voo || '').trim(),
+              route: String(v.origem || '').trim() || '-',
+              t: data,
+              calco: v.calco || null,
+    s: {
+        limpeza: 'ESC',
+        qtu: 'ESC',
+        qta: 'ESC',
+        fonia: 'ESC',
+        smartfuel: 'ESC',
+  },
+};
     })
     .filter(Boolean)
     .filter(f => !deveRemoverVoo(f))
@@ -241,7 +240,9 @@ function updateClock() {
 
 async function fetchFlights() {
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(`${API_URL}?t=${Date.now()}`, {
+      cache: 'no-store'
+    });
 
     if (!res.ok) {
       throw new Error(`Erro HTTP ${res.status}`);
