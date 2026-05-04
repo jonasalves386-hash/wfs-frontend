@@ -99,12 +99,17 @@ function deveRemoverVoo(f) {
 function adaptarVoos(apiVoos) {
   return apiVoos
     .map(v => {
-      const horario = String(v.horario || '').trim();
+      const horario = String(v.horario || '').trim().slice(0,5);
       const calco = String(v.calco || '').trim();
 
       const data = montarDataHojePorHorario(horario);
 
-      if (!data) return null;
+      if (!data) {
+  console.warn('VOO IGNORADO POR HORARIO INVALIDO:', v);
+  return null;
+}
+
+console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
 
       return {
               id: String(v.voo || '').trim(),
