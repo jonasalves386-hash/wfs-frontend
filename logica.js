@@ -1,5 +1,5 @@
 const API_URL = `${API_BASE_URL}/voos`;
-const SERVICES = ['limpeza', 'qtu', 'qta', 'fonia', 'smartfuel'];
+const SERVICES = ['limpeza', 'fonia', 'smartfuel'];
 const LOTE_SIZE = 25;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
@@ -7,8 +7,6 @@ const REMOVER_APOS_CALCO_MIN = 2;
 
 const SVC_LABEL = {
   limpeza: 'LIMPEZA',
-  qtu: 'QTU',
-  qta: 'QTA',
   fonia: 'FONIA',
   smartfuel: 'SMART F.',
 };
@@ -290,3 +288,7 @@ setInterval(() => {
   if (Date.now() >= nextRotation) rotateLote();
   render();
 }, 60000);
+
+setInterval(() => {
+  location.reload();
+}, 15 * 60 * 1000);
