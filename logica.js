@@ -64,27 +64,29 @@ function allEscalado(f) {
 }
 
 function adaptarVoos(apiVoos) {
-  return apiVoos.map(v => {
-    const [h, m] = v.horario.split(':').map(Number);
+  return apiVoos
+    .filter(v => v.horario && isHorarioValido(v.horario))
+    .map(v => {
+      const [h, m] = v.horario.split(':').map(Number);
 
-    const data = new Date();
-    data.setHours(h, m, 0, 0);
+      const data = new Date();
+      data.setHours(h, m, 0, 0);
 
-    return {
-    id: v.voo,
-    route: v.origem,
-    t: data,
-    calco: v.calco || null, // 👈 AQUI
+      return {
+        id: v.voo,
+        route: v.origem,
+        t: data,
+        calco: v.calco || null,
 
-    s: {
-    limpeza: v.tempo < 0 ? 'NAO' : 'ESC',
-    qtu: 'ESC',
-    qta: 'ESC',
-    fonia: 'ESC',
-    smartfuel: 'ESC'
-      }
-    };
-  });
+        s: {
+          limpeza: v.tempo < 0 ? 'NAO' : 'ESC',
+          qtu: 'ESC',
+          qta: 'ESC',
+          fonia: 'ESC',
+          smartfuel: 'ESC'
+        }
+      };
+    });
 }
 
 function isHorarioValido(h) {
