@@ -14,8 +14,13 @@ const SVC_LABEL = {
 };
 
 const STATUS = {
-  NAO: { label: 'NÃO ESC.', cls: 'chip-nao' },
-  ESC: { label: 'ESCALADO', cls: 'chip-esc' },
+  NAO:      { label: 'NÃO ESC.',  cls: 'chip-nao'      },
+  ESC:      { label: 'ESCALADO',  cls: 'chip-esc'      },
+  CINZA:    { label: 'PADRÃO',    cls: 'chip-cinza'    },
+  AZUL:     { label: 'ESCALADO',  cls: 'chip-azul'     },
+  AMARELO:  { label: 'ATENÇÃO',   cls: 'chip-amarelo'  },
+  VERMELHO: { label: 'CRÍTICO',   cls: 'chip-vermelho' },
+  VERDE:    { label: 'OK',        cls: 'chip-verde'    },
 };
 
 function minutesTo(date) {
@@ -41,6 +46,14 @@ function tempoClass(mins) {
   if (mins <= 15) return 't-urgente';
   if (mins <= 40) return 't-alerta';
   return 't-normal';
+}
+
+function limpezaStatus(f) {
+  if (f.limpeza?.escalado) return STATUS.AZUL;
+  const mins = minutesTo(f.t);
+  if (mins > 5) return STATUS.CINZA;
+  if (mins > 0) return STATUS.AMARELO;
+  return STATUS.VERMELHO;
 }
 
 function isPending(f) {
@@ -112,19 +125,20 @@ function adaptarVoos(apiVoos) {
 console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
 
       return {
-              id: String(v.voo || '').trim(),
-              voo: String(v.voo || '').trim(),
-              route: String(v.origem || '').trim() || '-',
-              t: data,
-              calco: v.calco || null,
-    s: {
-        limpeza: 'ESC',
-        qtu: 'ESC',
-        qta: 'ESC',
-        fonia: 'ESC',
-        smartfuel: 'ESC',
-  },
-};
+        id: String(v.voo || '').trim(),
+        voo: String(v.voo || '').trim(),
+        route: String(v.origem || '').trim() || '-',
+        t: data,
+        calco: v.calco || null,
+        limpeza: v.servicos?.limpeza ?? { escalado: false, valor: '' },
+        s: {
+          limpeza: 'ESC',
+          qtu: 'ESC',
+          qta: 'ESC',
+          fonia: 'ESC',
+          smartfuel: 'ESC',
+        },
+      };
     })
     .filter(Boolean)
     .filter(f => !deveRemoverVoo(f))
@@ -216,7 +230,7 @@ function render() {
 
   SERVICES.forEach(svc => {
     const tds = flights.map(f => {
-      const st = STATUS[f.s[svc]] || STATUS.ESC;
+      const st = svc === 'limpeza' ? limpezaStatus(f) : (STATUS[f.s[svc]] || STATUS.ESC);
       const col = colPending[f.id] ? 'cell-svc col-pending' : 'cell-svc';
 
       return `<td class="${col}"><div class="chip ${st.cls}">${st.label}</div></td>`;
