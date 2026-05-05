@@ -1,5 +1,5 @@
 const API_URL = `${API_BASE_URL}/voos`;
-const SERVICES = ['limpeza', 'fonia', 'smartfuel'];
+const SERVICES = ['limpeza', 'fonia', 'smartfuel', 'qtu', 'qta'];
 const LOTE_SIZE = 15;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
@@ -9,6 +9,8 @@ const SVC_LABEL = {
   limpeza: 'LIMPEZA',
   fonia: 'FONIA',
   smartfuel: 'SMART F.',
+  qtu: 'QTU',
+  qta: 'QTA',
 };
 
 const STATUS = {
