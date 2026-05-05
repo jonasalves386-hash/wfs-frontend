@@ -190,7 +190,7 @@ td.row-label, th.row-label {
 
 th.row-label {
   font-family: var(--sans);
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #fff;
   letter-spacing: 1.5px;
@@ -201,7 +201,7 @@ th.row-label {
 
 td.row-label {
   font-family: var(--mono);
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 1px;
@@ -219,7 +219,7 @@ tr.sep-row td {
 /* ── CABEÇALHO VOO — número grande, coluna fina ── */
 th.col-voo {
   font-family: var(--mono);
-  font-size: 28px;   /* número do voo GRANDE */
+  font-size: 29px;   /* número do voo GRANDE */
   font-weight: 800;
   color: #fff;
   letter-spacing: 0;
@@ -319,7 +319,7 @@ td.cell-svc.col-pending { background: transparent; }
 
 /* AMARELO — atenção / prazo se aproximando */
 .chip-amarelo {
-  background: #d97706;
+  background: #d9cb06;
   color: #ffffff;
 }
 
