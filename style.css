@@ -240,7 +240,7 @@ th.col-voo.has-pending { color: #ffffff; }
 /* ── CÉLULAS INFO ── */
 td.cell-info {
   font-family: var(--mono);
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--text-muted);
   text-align: center;
@@ -262,160 +262,83 @@ td.t-urgente  { color: var(--tempo-urgente);  font-weight: 700; }
 td.t-alerta   { color: var(--tempo-alerta);   font-weight: 700; }
 td.t-normal   { color: var(--text-muted); }
 
-/* ── CÉLULAS SERVIÇO ── */
+/* ── CÉLULAS SERVIÇO — Andon: célula inteira colorida ── */
 td.cell-svc {
   text-align: center;
-  padding: 4px 3px;
+  padding: 0;
   height: var(--h-svc);
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  vertical-align: middle;
   width: var(--w-col);
   min-width: var(--w-col);
   max-width: var(--w-col);
 }
 
-td.cell-svc.col-pending { background: rgba(111, 152, 106, 0); }
+td.cell-svc.col-pending { background: transparent; }
 
-/* ── CHIP — cortado se necessário ── */
+/* ── CHIP — preenche a célula inteira ── */
 .chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 30px;
   width: 100%;
-  border-radius: 3px;
+  height: 100%;
+  border-radius: 0;
   font-family: var(--mono);
-  font-size: 2px;
+  font-size: 0px;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
   overflow: hidden;
   white-space: nowrap;
-  transition: box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
 }
 
 .chip-nao {
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  color: var(--red-text);
-  box-shadow: 0 0 6px rgba(165, 22, 22, 0.35);
+  background: #7f1d1d;
+  color: #fca5a5;
 }
 
 .chip-esc {
-  background: var(--gray-bg);
-  border: 1px solid var(--gray-border);
-  color: var(--gray-text);
+  background: #2a2e37;
+  color: #6b7280;
 }
 
-/* ── FAROL DE SERVIÇOS ── */
+/* ── FAROL ANDON ── */
 
-/* CINZA — padrão / aguardando */
+/* CINZA — neutro / aguardando */
 .chip-cinza {
-  background: linear-gradient(160deg, #2e3240 0%, #262930 100%);
-  border: 1px solid #454a57;
+  background: #3a3e47;
   color: #5c6372;
 }
 
-/* AZUL — escalado / designado */
+/* AZUL — escalado / ok operacional */
 .chip-azul {
-  background: linear-gradient(160deg, #0b1f3a 0%, #0d2545 100%);
-  border: 1px solid #1d4ed8;
-  color: #93c5fd;
-  box-shadow:
-    0 0 0 1px rgba(29, 78, 216, 0.15),
-    0 0 14px rgba(29, 78, 216, 0.55),
-    inset 0 1px 0 rgba(147, 197, 253, 0.08);
-  text-shadow: 0 0 12px rgba(147, 197, 253, 0.95);
-  animation: glowBlue 3.5s ease-in-out infinite;
-}
-
-@keyframes glowBlue {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgba(29,78,216,.15),
-      0 0 14px rgba(29,78,216,.55),
-      inset 0 1px 0 rgba(147,197,253,.08);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgba(29,78,216,.3),
-      0 0 26px rgba(29,78,216,.8),
-      0 0 44px rgba(29,78,216,.2),
-      inset 0 1px 0 rgba(147,197,253,.13);
-  }
+  background: #1d4ed8;
+  color: #ffffff;
 }
 
 /* AMARELO — atenção / prazo se aproximando */
 .chip-amarelo {
-  background: linear-gradient(160deg, #2e1c00 0%, #3d2500 100%);
-  border: 1px solid #ca8a04;
-  color: #fde047;
-  box-shadow:
-    0 0 0 1px rgba(202, 138, 4, 0.2),
-    0 0 16px rgba(202, 138, 4, 0.55),
-    inset 0 1px 0 rgba(253, 224, 71, 0.1);
-  text-shadow: 0 0 14px rgba(253, 224, 71, 1);
-  animation: breatheAmber 1.8s ease-in-out infinite;
+  background: #d97706;
+  color: #ffffff;
 }
 
-@keyframes breatheAmber {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgba(202,138,4,.2),
-      0 0 16px rgba(202,138,4,.55),
-      inset 0 1px 0 rgba(253,224,71,.1);
-    border-color: #ca8a04;
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgba(202,138,4,.45),
-      0 0 30px rgba(202,138,4,.85),
-      0 0 52px rgba(202,138,4,.28),
-      inset 0 1px 0 rgba(253,224,71,.16);
-    border-color: #eab308;
-  }
-}
-
-/* VERMELHO — crítico / ação imediata */
+/* VERMELHO — crítico / pisca Andon */
 .chip-vermelho {
-  background: linear-gradient(160deg, #3f0808 0%, #530e0e 100%);
-  border: 1px solid #dc2626;
-  color: #fca5a5;
-  box-shadow:
-    0 0 0 1px rgba(220, 38, 38, 0.35),
-    0 0 20px rgba(220, 38, 38, 0.9),
-    0 0 40px rgba(220, 38, 38, 0.4),
-    inset 0 1px 0 rgba(252, 165, 165, 0.12);
-  text-shadow: 0 0 10px rgba(252, 165, 165, 1);
+  background: #dc2626;
+  color: #ffffff;
   animation: blinkCritical 0.72s steps(1) infinite;
 }
 
 @keyframes blinkCritical {
-  0%, 100% {
-    opacity: 1;
-    box-shadow:
-      0 0 0 1px rgba(220,38,38,.35),
-      0 0 24px rgba(220,38,38,1),
-      0 0 48px rgba(220,38,38,.5),
-      inset 0 1px 0 rgba(252,165,165,.14);
-  }
-  50% {
-    opacity: 0.04;
-    box-shadow: none;
-  }
+  0%, 100% { background: #dc2626; }
+  50%       { background: #2d0a0a; }
 }
 
-/* VERDE — OK / confirmado */
+/* VERDE — ok / confirmado */
 .chip-verde {
-  background: linear-gradient(160deg, #052e16 0%, #063d1e 100%);
-  border: 1px solid #15803d;
-  color: #4ade80;
-  box-shadow:
-    0 0 0 1px rgba(21, 128, 61, 0.2),
-    0 0 14px rgba(21, 128, 61, 0.5),
-    inset 0 1px 0 rgba(74, 222, 128, 0.08);
-  text-shadow: 0 0 12px rgba(74, 222, 128, 0.9);
+  background: #15803d;
+  color: #ffffff;
 }
 
 /* ── TICKER ── */

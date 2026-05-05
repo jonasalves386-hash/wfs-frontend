@@ -3,7 +3,6 @@ const SERVICES = ['limpeza', 'fonia', 'smartfuel', 'qtu', 'qta'];
 const LOTE_SIZE = 15;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
-const REMOVER_APOS_CALCO_MIN = 2;
 
 const SVC_LABEL = {
   limpeza: 'LIMPEZA',
@@ -100,14 +99,11 @@ function minutosDesdeHorario(horario) {
   return Math.round((Date.now() - alvo.getTime()) / 60000);
 }
 
-function deveRemoverVoo(f) {
-  if (!f.calco) return false;
-
-  const minutos = minutosDesdeHorario(f.calco);
-
-  if (minutos === null) return false;
-
-  return minutos >= REMOVER_APOS_CALCO_MIN;
+function deveExibirVoo(f) {
+  const mins = minutesTo(f.t);
+  const limpezaOk = f.limpeza?.escalado === true;
+  if (limpezaOk && mins <= 0) return false;
+  return true;
 }
 
 function adaptarVoos(apiVoos) {
@@ -142,7 +138,7 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
       };
     })
     .filter(Boolean)
-    .filter(f => !deveRemoverVoo(f))
+    .filter(deveExibirVoo)
     .sort((a, b) => a.t - b.t)
     .slice(0, LOTE_SIZE);
 }
@@ -179,7 +175,7 @@ function getSortedLote() {
   return currentLote
     .map(id => allFlights.find(f => f.id === id))
     .filter(Boolean)
-    .filter(f => !deveRemoverVoo(f))
+    .filter(deveExibirVoo)
     .sort((a, b) => a.t - b.t)
     .slice(0, LOTE_SIZE);
 }
