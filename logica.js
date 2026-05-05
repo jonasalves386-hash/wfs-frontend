@@ -1,26 +1,21 @@
 const API_URL = `${API_BASE_URL}/voos`;
-const SERVICES = ['limpeza', 'fonia', 'smartfuel', 'qtu', 'qta'];
-const LOTE_SIZE = 15;
+const SERVICES = ['limpeza', 'qtu', 'qta', 'fonia', 'smartfuel'];
+const LOTE_SIZE = 25;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
+const REMOVER_APOS_CALCO_MIN = 2;
 
 const SVC_LABEL = {
   limpeza: 'LIMPEZA',
-  fonia: 'FONIA',
-  smartfuel: 'SMART F.',
   qtu: 'QTU',
   qta: 'QTA',
+  fonia: 'FONIA',
+  smartfuel: 'SMART F.',
 };
 
 const STATUS = {
-  NAO:      { label: 'NÃO ESC.',  cls: 'chip-nao'      },
-  ESC:      { label: 'ESCALADO',  cls: 'chip-esc'      },
-  // farol — prontos para regra de negócio
-  CINZA:    { label: 'PADRÃO',    cls: 'chip-cinza'    },
-  AZUL:     { label: 'ESCALADO',  cls: 'chip-azul'     },
-  AMARELO:  { label: 'ATENÇÃO',   cls: 'chip-amarelo'  },
-  VERMELHO: { label: 'CRÍTICO',   cls: 'chip-vermelho' },
-  VERDE:    { label: 'OK',        cls: 'chip-verde'    },
+  NAO: { label: 'NÃO ESC.', cls: 'chip-nao' },
+  ESC: { label: 'ESCALADO', cls: 'chip-esc' },
 };
 
 function minutesTo(date) {
@@ -46,14 +41,6 @@ function tempoClass(mins) {
   if (mins <= 15) return 't-urgente';
   if (mins <= 40) return 't-alerta';
   return 't-normal';
-}
-
-function limpezaStatus(f) {
-  if (f.limpeza?.escalado) return STATUS.AZUL;
-  const mins = minutesTo(f.t);
-  if (mins > 5) return STATUS.CINZA;
-  if (mins > 0) return STATUS.AMARELO;
-  return STATUS.VERMELHO;
 }
 
 function isPending(f) {
@@ -99,11 +86,14 @@ function minutosDesdeHorario(horario) {
   return Math.round((Date.now() - alvo.getTime()) / 60000);
 }
 
-function deveExibirVoo(f) {
-  const mins = minutesTo(f.t);
-  const limpezaOk = f.limpeza?.escalado === true;
-  if (limpezaOk && mins <= 0) return false;
-  return true;
+function deveRemoverVoo(f) {
+  if (!f.calco) return false;
+
+  const minutos = minutosDesdeHorario(f.calco);
+
+  if (minutos === null) return false;
+
+  return minutos >= REMOVER_APOS_CALCO_MIN;
 }
 
 function adaptarVoos(apiVoos) {
@@ -122,23 +112,22 @@ function adaptarVoos(apiVoos) {
 console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
 
       return {
-        id: String(v.voo || '').trim(),
-        voo: String(v.voo || '').trim(),
-        route: String(v.origem || '').trim() || '-',
-        t: data,
-        calco: v.calco || null,
-        limpeza: v.servicos?.limpeza ?? { escalado: false, valor: '' },
-        s: {
-          limpeza: 'ESC',
-          qtu: 'ESC',
-          qta: 'ESC',
-          fonia: 'ESC',
-          smartfuel: 'ESC',
-        },
-      };
+              id: String(v.voo || '').trim(),
+              voo: String(v.voo || '').trim(),
+              route: String(v.origem || '').trim() || '-',
+              t: data,
+              calco: v.calco || null,
+    s: {
+        limpeza: 'ESC',
+        qtu: 'ESC',
+        qta: 'ESC',
+        fonia: 'ESC',
+        smartfuel: 'ESC',
+  },
+};
     })
     .filter(Boolean)
-    .filter(deveExibirVoo)
+    .filter(f => !deveRemoverVoo(f))
     .sort((a, b) => a.t - b.t)
     .slice(0, LOTE_SIZE);
 }
@@ -175,7 +164,7 @@ function getSortedLote() {
   return currentLote
     .map(id => allFlights.find(f => f.id === id))
     .filter(Boolean)
-    .filter(deveExibirVoo)
+    .filter(f => !deveRemoverVoo(f))
     .sort((a, b) => a.t - b.t)
     .slice(0, LOTE_SIZE);
 }
@@ -227,7 +216,7 @@ function render() {
 
   SERVICES.forEach(svc => {
     const tds = flights.map(f => {
-      const st = svc === 'limpeza' ? limpezaStatus(f) : (STATUS[f.s[svc]] || STATUS.ESC);
+      const st = STATUS[f.s[svc]] || STATUS.ESC;
       const col = colPending[f.id] ? 'cell-svc col-pending' : 'cell-svc';
 
       return `<td class="${col}"><div class="chip ${st.cls}">${st.label}</div></td>`;
@@ -301,7 +290,3 @@ setInterval(() => {
   if (Date.now() >= nextRotation) rotateLote();
   render();
 }, 60000);
-
-setInterval(() => {
-  location.reload();
-}, 15 * 60 * 1000);
