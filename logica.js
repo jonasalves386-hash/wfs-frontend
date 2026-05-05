@@ -304,3 +304,8 @@ setInterval(() => {
   if (Date.now() >= nextRotation) rotateLote();
   render();
 }, 60000);
+
+setInterval(() => {
+  console.log('🔄 Auto reload da página (15 min)');
+  location.reload();
+}, 15 * 60 * 1000); // 15 minutos
