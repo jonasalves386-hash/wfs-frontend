@@ -3,7 +3,6 @@ const SERVICES = ['limpeza', 'qtu', 'qta', 'fonia', 'smartfuel'];
 const LOTE_SIZE = 25;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
-const REMOVER_APOS_CALCO_MIN = 2;
 
 const SVC_LABEL = {
   limpeza: 'LIMPEZA',
@@ -44,7 +43,7 @@ function fmtTempo(mins) {
 function tempoClass(mins) {
   if (mins <= 0) return 't-atrasado';
   if (mins <= 15) return 't-urgente';
-  if (mins <= 40) return 't-alerta';
+  if (mins <= 30) return 't-alerta';
   return 't-normal';
 }
 
@@ -87,26 +86,12 @@ function estaNaJanelaOperacional(dataVoo) {
   return diffMin >= -JANELA_MINUTOS && diffMin <= JANELA_MINUTOS;
 }
 
-function minutosDesdeHorario(horario) {
-  const horarioLimpo = String(horario || '').trim();
-
-  if (!isHorarioValido(horarioLimpo)) return null;
-
-  const alvo = montarDataHojePorHorario(horarioLimpo);
-
-  if (!alvo) return null;
-
-  return Math.round((Date.now() - alvo.getTime()) / 60000);
-}
-
 function deveRemoverVoo(f) {
-  if (!f.calco) return false;
+  const mins = minutesTo(f.t);
 
-  const minutos = minutosDesdeHorario(f.calco);
-
-  if (minutos === null) return false;
-
-  return minutos >= REMOVER_APOS_CALCO_MIN;
+  // NOVA REGRA:
+  // se limpeza está escalada e ETA zerou/passou, remove da tela
+  return f.limpeza?.escalado && mins <= 0;
 }
 
 function adaptarVoos(apiVoos) {
