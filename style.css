@@ -37,7 +37,7 @@
 
   /* largura das colunas de voo — finas */
   --w-label:  70px;
-  --w-col:   50px;
+  --w-col:   60px;
 }
 
 html, body { height: 100%; overflow: hidden; }
@@ -52,16 +52,16 @@ body {
 .header {
   height: var(--h-header);
   background: var(--surface);
-  border-bottom: 2px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  gap: 12px;
+  padding: 40px 12px;
+  gap: 10px;
 }
 
 
 .logo-img {
-  height: 50px;
+  height: 70px;
   width: auto;
   object-fit: contain;
   display: block;
@@ -70,17 +70,10 @@ body {
 .logo-info { line-height: 1.1; }
 
 .logo-title {
-  font-size: 28px;
+  font-size: 40px;
   font-weight: 800;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
-
-.logo-sub {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-dim);
   letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .divider {
@@ -107,7 +100,7 @@ body {
 
 .live-text {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: #22c55e;
   letter-spacing: 2px;
@@ -119,7 +112,7 @@ body {
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 3px 12px;
+  padding: 3px 3px;
   text-align: center;
   min-width: 70px;
 }
@@ -128,12 +121,12 @@ body {
 
 .stat-label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-dim);
   letter-spacing: 2px;
   display: block;
-  margin-bottom: 1px;
+  margin-bottom: 9px;
 }
 
 .stat-value {
@@ -148,7 +141,7 @@ body {
 
 .clock {
   font-family: var(--mono);
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: 2px;
 }
@@ -177,7 +170,7 @@ table {
 td.row-label, th.row-label {
   background: var(--surface2);
   border-bottom: 2px solid var(--border);
-  padding: 0 10px;
+  padding: 0 18px;
   white-space: nowrap;
   position: sticky;
   left: 0; 
