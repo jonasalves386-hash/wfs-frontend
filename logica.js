@@ -55,6 +55,18 @@ function limpezaStatus(f) {
   return STATUS.VERMELHO;
 }
 
+function statusServicoVisual(f, svc) {
+  const servico = f[svc];
+
+  if (servico?.escalado) return STATUS.AZUL;
+
+  const mins = minutesTo(f.t);
+
+  if (mins > 5) return STATUS.CINZA;
+
+  return STATUS.AMARELO;
+}
+
 function isPending(f) {
   return Object.values(f.s).some(v => v === 'NAO');
 }
@@ -116,6 +128,8 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
         t: data,
         calco: v.calco || null,
         limpeza: v.servicos?.limpeza ?? { escalado: false, valor: '' },
+        qta: v.servicos?.qta ?? { escalado: false, valor: '' },
+        qtu: v.servicos?.qtu ?? { escalado: false, valor: '' },
         s: {
           limpeza: 'ESC',
           qtu: 'ESC',
@@ -215,7 +229,19 @@ function render() {
 
   SERVICES.forEach(svc => {
     const tds = flights.map(f => {
-      const st = svc === 'limpeza' ? limpezaStatus(f) : (STATUS[f.s[svc]] || STATUS.ESC);
+      let st;
+
+  if (svc === 'limpeza') {
+    st = limpezaStatus(f);
+  }
+else if (svc === 'qta' || svc === 'qtu') 
+    {
+    st = statusServicoVisual(f, svc);
+  } 
+else 
+  {
+  st = STATUS[f.s[svc]] || STATUS.ESC;
+}
       const col = colPending[f.id] ? 'cell-svc col-pending' : 'cell-svc';
 
       return `<td class="${col}"><div class="chip ${st.cls}">${st.label}</div></td>`;
