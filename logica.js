@@ -1,12 +1,12 @@
 const API_URL = `${API_BASE_URL}/voos`;
-const SERVICES = ['limpeza', 'qtu', 'qta', 'fonia', 'smartfuel'];
+const SERVICES = ['fonia', 'limpeza', 'qtu', 'qta', 'smartfuel'];
 const LOTE_SIZE = 15;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
 
 const SVC_LABEL = {
-  limpeza: 'LIMPEZA',
   fonia: 'FONIA',
+  limpeza: 'LIMPEZA',
   qtu: 'QTU',
   qta: 'QTA',
   smartfuel: 'SMART F.',
@@ -101,9 +101,11 @@ function estaNaJanelaOperacional(dataVoo) {
 function deveRemoverVoo(f) {
   const mins = minutesTo(f.t);
 
-  // NOVA REGRA:
-  // se limpeza está escalada e ETA zerou/passou, remove da tela
-  return f.limpeza?.escalado && mins <= 0;
+  return (
+    mins <= 0 &&
+    f.limpeza?.escalado &&
+    f.fonia?.escalado
+  );
 }
 
 function adaptarVoos(apiVoos) {
@@ -127,6 +129,7 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
         route: String(v.origem || '').trim() || '-',
         t: data,
         calco: v.calco || null,
+        fonia: v.servicos?.fonia ?? { escalado: false, valor: '' },
         limpeza: v.servicos?.limpeza ?? { escalado: false, valor: '' },
         qta: v.servicos?.qta ?? { escalado: false, valor: '' },
         qtu: v.servicos?.qtu ?? { escalado: false, valor: '' },
@@ -148,6 +151,16 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
 let allFlights = [];
 let currentLote = [];
 let nextRotation = Date.now() + ROTATION_MS;
+
+function foniaStatus(f) {
+  if (f.fonia?.escalado) return STATUS.AZUL;
+
+  const mins = minutesTo(f.t);
+
+  if (mins > 30) return STATUS.CINZA;
+  if (mins > 5) return STATUS.AMARELO;
+  return STATUS.VERMELHO;
+}
 
 function buildLote() {
   return [...allFlights]
@@ -231,15 +244,13 @@ function render() {
     const tds = flights.map(f => {
       let st;
 
-  if (svc === 'limpeza') {
-    st = limpezaStatus(f);
-  }
-else if (svc === 'qta' || svc === 'qtu') 
-    {
-    st = statusServicoVisual(f, svc);
-  } 
-else 
-  {
+if (svc === 'fonia') {
+  st = foniaStatus(f);
+} else if (svc === 'limpeza') {
+  st = limpezaStatus(f);
+} else if (svc === 'qta' || svc === 'qtu') {
+  st = statusServicoVisual(f, svc);
+} else {
   st = STATUS[f.s[svc]] || STATUS.ESC;
 }
       const col = colPending[f.id] ? 'cell-svc col-pending' : 'cell-svc';
