@@ -9,7 +9,7 @@ const SVC_LABEL = {
   limpeza: 'LIMPEZA',
   qtu: 'QTU',
   qta: 'QTA',
-  smartfuel: 'SMART F.',
+  smartfuel: 'SMARTF',
 };
 
 const STATUS = {
@@ -133,6 +133,7 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
         limpeza: v.servicos?.limpeza ?? { escalado: false, valor: '' },
         qta: v.servicos?.qta ?? { escalado: false, valor: '' },
         qtu: v.servicos?.qtu ?? { escalado: false, valor: '' },
+        smartfuel: v.servicos?.smartfuel ?? { escalado: false, valor: '' },
         s: {
           limpeza: 'ESC',
           qtu: 'ESC',
@@ -248,11 +249,16 @@ if (svc === 'fonia') {
   st = foniaStatus(f);
 } else if (svc === 'limpeza') {
   st = limpezaStatus(f);
-} else if (svc === 'qta' || svc === 'qtu') {
+} else if (
+  svc === 'qta' ||
+  svc === 'qtu' ||
+  svc === 'smartfuel'
+) {
   st = statusServicoVisual(f, svc);
 } else {
   st = STATUS[f.s[svc]] || STATUS.ESC;
 }
+
       const col = colPending[f.id] ? 'cell-svc col-pending' : 'cell-svc';
 
       return `<td class="${col}"><div class="chip ${st.cls}">${st.label}</div></td>`;
