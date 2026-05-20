@@ -1,5 +1,5 @@
 const API_URL = `${API_BASE_URL}/voos`;
-const SERVICES = ['fonia', 'limpeza', 'qtu', 'qta', 'smartfuel'];
+const SERVICES = ['fonia', 'limpeza', 'restituiçao', 'qtu', 'qta', 'smartfuel'];
 const LOTE_SIZE = 15;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
@@ -7,6 +7,7 @@ const JANELA_MINUTOS = 60;
 const SVC_LABEL = {
   fonia: 'FONIA',
   limpeza: 'LIMPEZA',
+  restituiçao: 'RESTITUIÇÃO',
   qtu: 'QTU',
   qta: 'QTA',
   smartfuel: 'SMARTF',
@@ -134,12 +135,14 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
         qta: v.servicos?.qta ?? { escalado: false, valor: '' },
         qtu: v.servicos?.qtu ?? { escalado: false, valor: '' },
         smartfuel: v.servicos?.smartfuel ?? { escalado: false, valor: '' },
+        restituiçao: v.servicos?.restituiçao ?? { escalado: false, valor: '' },
         s: {
           limpeza: 'ESC',
           qtu: 'ESC',
           qta: 'ESC',
           fonia: 'ESC',
           smartfuel: 'ESC',
+          restituiçao: 'ESC',
         },
       };
     })
@@ -247,13 +250,18 @@ function render() {
 
 if (svc === 'fonia') {
   st = foniaStatus(f);
-} else if (svc === 'limpeza') {
+}
+else if (svc === 'limpeza') {
   st = limpezaStatus(f);
-} else if (
+} 
+else if (
   svc === 'qta' ||
   svc === 'qtu' ||
-  svc === 'smartfuel'
-) {
+  svc === 'smartfuel' ||
+  svc === 'restituiçao'
+)
+
+{
   st = statusServicoVisual(f, svc);
 } else {
   st = STATUS[f.s[svc]] || STATUS.ESC;
@@ -331,9 +339,9 @@ setInterval(fetchFlights, 30000);
 setInterval(() => {
   if (Date.now() >= nextRotation) rotateLote();
   render();
-}, 60000);
+}, 30000);
 
-setInterval(() => {
-  console.log('🔄 Auto reload da página (15 min)');
-  location.reload();
-}, 15 * 60 * 1000); // 15 minutos
+// setInterval(() => {
+//   console.log('🔄 Auto reload da página (15 min)');
+//   location.reload();
+// }, 15 * 60 * 1000); // 15 minutos
