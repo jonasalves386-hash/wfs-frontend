@@ -7,7 +7,7 @@ const JANELA_MINUTOS = 60;
 const SVC_LABEL = {
   fonia: 'FONIA',
   limpeza: 'LIMPEZA',
-  restituiçao: 'RESTITUIÇÃO',
+  restituiçao: 'REST.',
   qtu: 'QTU',
   qta: 'QTA',
   smartfuel: 'SMARTF',
