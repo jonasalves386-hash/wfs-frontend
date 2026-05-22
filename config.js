@@ -6,5 +6,5 @@ const API_BASE_URL = (() => {
     return 'http://localhost:3000';
   }
 
-  return 'http://2.24.107.151:3001';
+  return `${window.location.origin}/api`;
 })();
