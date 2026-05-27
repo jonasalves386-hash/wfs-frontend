@@ -203,7 +203,6 @@ function render() {
   const flights = getSortedLote();
   const pending = flights.filter(isPending).length;
 
-  document.getElementById('cnt-attn').textContent = pending;
   document.getElementById('cnt-total').textContent = flights.length;
 
   const colPending = {};
