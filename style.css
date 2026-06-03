@@ -327,7 +327,7 @@ td.cell-svc.col-pending { background: transparent; }
 
 /* AZUL — escalado / ok operacional */
 .chip-azul {
-  background: blue;
+  background: rgb(0, 140, 255);
   color: #ffffff;
 }
 
