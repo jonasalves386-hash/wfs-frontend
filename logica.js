@@ -1,10 +1,11 @@
-const API_URL = `${API_BASE_URL}/voos`;
-const SERVICES = ['fonia', 'limpeza', 'restituiçao', 'qtu', 'qta', 'smartfuel'];
+﻿const API_URL = `${API_BASE_URL}/voos`;
+const SERVICES = ['portas', 'fonia', 'limpeza', 'restituiçao', 'qtu', 'qta', 'smartfuel'];
 const LOTE_SIZE = 15;
 const ROTATION_MS = 60 * 60 * 1000; // 1 hora
 const JANELA_MINUTOS = 60;
 
 const SVC_LABEL = {
+  portas: 'PORTAS',
   fonia: 'FONIA',
   limpeza: 'LIMPEZA',
   restituiçao: 'REST.',
@@ -56,6 +57,35 @@ function limpezaStatus(f) {
   return STATUS.VERMELHO;
 }
 
+
+function minutesSince(timeStr) {
+  const d = montarDataHojePorHorario(timeStr);
+  if (!d) return null;
+  return Math.round((Date.now() - d) / 60000);
+}
+
+function portasStatus(f) {
+  const portas = f.portas;
+  if (!portas) return STATUS.CINZA;
+
+  if (portas.openDoor) {
+    const minsOpen = minutesSince(portas.openDoor);
+    if (minsOpen !== null && minsOpen <= 3) return STATUS.VERDE;
+    return null; // sai da tela apos 3 min de verde
+  }
+
+  if (portas.calco) {
+    const minsCalco = minutesSince(portas.calco);
+    if (minsCalco !== null) {
+      if (minsCalco <= 5) return STATUS.AMARELO;
+      return STATUS.VERMELHO; // chip-vermelho ja pisca via CSS
+    }
+  }
+
+  const mins = minutesTo(f.t);
+  if (mins > 5) return STATUS.CINZA;
+  return STATUS.AMARELO;
+}
 function statusServicoVisual(f, svc) {
   const servico = f[svc];
 
@@ -136,7 +166,9 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
         qtu: v.servicos?.qtu ?? { escalado: false, valor: '' },
         smartfuel: v.servicos?.smartfuel ?? { escalado: false, valor: '' },
         restituiçao: v.servicos?.restituiçao ?? { escalado: false, valor: '' },
+        portas: v.servicos?.portas ?? { calco: null, openDoor: null },
         s: {
+          portas: 'ESC',
           limpeza: 'ESC',
           qtu: 'ESC',
           qta: 'ESC',
@@ -247,7 +279,10 @@ function render() {
     const tds = flights.map(f => {
       let st;
 
-if (svc === 'fonia') {
+if (svc === 'portas') {
+  st = portasStatus(f);
+}
+else if (svc === 'fonia') {
   st = foniaStatus(f);
 }
 else if (svc === 'limpeza') {
@@ -268,7 +303,8 @@ else if (
 
       const col = colPending[f.id] ? 'cell-svc col-pending' : 'cell-svc';
 
-      return `<td class="${col}"><div class="chip ${st.cls}">${st.label}</div></td>`;
+      const chipHtml = st ? `<div class="chip ${st.cls}">${st.label}</div>` : ``;
+      return `<td class="${col}">${chipHtml}</td>`;
     }).join('');
 
     rows.push(`<tr><td class="row-label">${SVC_LABEL[svc]}</td>${tds}</tr>`);
@@ -344,3 +380,4 @@ setInterval(() => {
 //   console.log('🔄 Auto reload da página (15 min)');
 //   location.reload();
 // }, 15 * 60 * 1000); // 15 minutos
+// ok
