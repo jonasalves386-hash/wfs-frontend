@@ -66,24 +66,27 @@ function minutesSince(timeStr) {
 
 function portasStatus(f) {
   const portas = f.portas;
-  if (!portas) return STATUS.CINZA;
 
-  if (portas.openDoor) {
-    const minsOpen = minutesSince(portas.openDoor);
-    if (minsOpen !== null && minsOpen <= 3) return STATUS.VERDE;
-    return null; // sai da tela apos 3 min de verde
-  }
+  // Posicao finger: PORTAS nao e considerado
+  if (portas?.isFinger) return null;
 
-  if (portas.calco) {
-    const minsCalco = minutesSince(portas.calco);
-    if (minsCalco !== null) {
-      if (minsCalco <= 5) return STATUS.AMARELO;
-      return STATUS.VERMELHO; // chip-vermelho ja pisca via CSS
+  // Sem calco: inativo
+  if (!portas?.calco) return STATUS.CINZA;
+
+  // Open door registrado
+  if (portas?.openDoor) {
+    // Todos os 3 servicos concluidos -> VERDE
+    if (f.fonia?.escalado && f.limpeza?.escalado) {
+      const minsOpen = minutesSince(portas.openDoor);
+      if (minsOpen !== null && minsOpen <= 3) return STATUS.VERDE;
+      return null; // deveRemoverVoo tira da tela apos 3 min
     }
+    return STATUS.AZUL; // porta aberta, aguardando fonia/limpeza
   }
 
-  const mins = minutesTo(f.t);
-  if (mins > 5) return STATUS.CINZA;
+  // Calco registrado, sem open door: baseado no tempo desde o calco
+  const minsCalco = minutesSince(portas.calco);
+  if (minsCalco !== null && minsCalco >= 5) return STATUS.VERMELHO;
   return STATUS.AMARELO;
 }
 function statusServicoVisual(f, svc) {
@@ -130,13 +133,16 @@ function estaNaJanelaOperacional(dataVoo) {
 }
 
 function deveRemoverVoo(f) {
-  const mins = minutesTo(f.t);
-
-  return (
-    mins <= 0 &&
-    f.limpeza?.escalado &&
-    f.fonia?.escalado
-  );
+  // Finger: sai com fonia + limpeza apos ETA zerado (sem open door)
+  if (f.portas?.isFinger) {
+    const mins = minutesTo(f.t);
+    return mins <= 0 && !!(f.fonia?.escalado && f.limpeza?.escalado);
+  }
+  // Normal: sai apenas com open door + fonia + limpeza + 3 min verde
+  if (!f.portas?.openDoor) return false;
+  if (!f.fonia?.escalado || !f.limpeza?.escalado) return false;
+  const minsOpen = minutesSince(f.portas.openDoor);
+  return minsOpen !== null && minsOpen > 3;
 }
 
 function adaptarVoos(apiVoos) {
@@ -166,7 +172,7 @@ console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
         qtu: v.servicos?.qtu ?? { escalado: false, valor: '' },
         smartfuel: v.servicos?.smartfuel ?? { escalado: false, valor: '' },
         restituiçao: v.servicos?.restituiçao ?? { escalado: false, valor: '' },
-        portas: v.servicos?.portas ?? { calco: null, openDoor: null },
+        portas: v.servicos?.portas ?? { calco: null, openDoor: null, isFinger: false },
         s: {
           portas: 'ESC',
           limpeza: 'ESC',
