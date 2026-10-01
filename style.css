@@ -252,10 +252,6 @@ td {
   49%, 99% { background: #6c1118; }
 }
 
-.cell-gate {
-  font-size: clamp(20px, 1.45vw, 28px);
-}
-
 .ticker {
   height: var(--footer-height);
   background: var(--surface);

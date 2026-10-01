@@ -84,7 +84,7 @@ function render() {
       const minutes = PanelRules.minutesUntil(flight.eta, nowMs);
       return infoCell(formatRemaining(minutes), `cell-time ${timeClass(minutes)}`);
     }).join(''),
-    BOX: flights.map((flight) => statusCell('gray', flight.box, 'cell-gate')).join(''),
+    BOX: flights.map((flight) => infoCell(flight.box)).join(''),
     FONIA: flights.map((flight) => {
       const status = PanelRules.foniaStatus(flight, nowMs);
       const teamName = status === 'blue' || status === 'green' ? flight.fonia?.teamName : '';
