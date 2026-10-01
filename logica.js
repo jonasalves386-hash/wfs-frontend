@@ -175,34 +175,32 @@ async function fetchFlights() {
   }
 }
 
-// Rodapé em carrossel: repete o texto até cada metade da faixa cobrir a tela
-// (sem buraco no fim do ciclo) e mantém a velocidade de leitura constante.
-const LEGEND_SPEED_PX_PER_S = 40;
+// Rodapé (ticker) no mesmo padrão do Painel de Saídas.
+const TICKER_MESSAGES = [
+  'WFS · PAINEL DE CONTROLE OPERACIONAL · GRU',
+  'LATAM CHEGADAS',
+  'AMARELO = ATENÇÃO · VERMELHO = CRÍTICO · AZUL = ESCALADO · VERDE = NA POSIÇÃO OU FINALIZADO · CINZA = SEM SINAL OU FORA DA JANELA',
+];
+const TICKER_SPEED_PX_PER_S = 30;
 
-function setupLegendCarousel() {
-  const footer = document.querySelector('.legend');
-  const track = footer?.querySelector('.legend-track');
-  const template = track?.querySelector('.legend-group');
-  if (!template) return;
+function setupTicker() {
+  const ticker = document.getElementById('ticker');
+  if (!ticker) return;
+  const html = (messages) => messages.map((message) => `<span>${escapeHtml(message)}</span>`).join('');
 
-  track.querySelectorAll('.legend-group:not(:first-child)').forEach((group) => group.remove());
-  const half = document.createElement('div');
-  half.className = 'legend-half';
-  half.append(template);
-  while (half.offsetWidth < footer.clientWidth || half.children.length === 1) {
-    const copy = template.cloneNode(true);
-    copy.setAttribute('aria-hidden', 'true');
-    half.append(copy);
-    track.append(half);
-    if (half.offsetWidth === 0) break;
+  // Lista duplicada: a animação anda -50% e emenda sem "pulo". Se a lista não
+  // cobrir a largura da tela, repete as mensagens para não abrir buraco no fim.
+  let half = [...TICKER_MESSAGES];
+  ticker.innerHTML = html([...half, ...half]);
+  const available = ticker.parentElement.clientWidth;
+  while (ticker.scrollWidth / 2 < available && half.length < TICKER_MESSAGES.length * 6) {
+    half = [...half, ...TICKER_MESSAGES];
+    ticker.innerHTML = html([...half, ...half]);
   }
-  const mirror = half.cloneNode(true);
-  mirror.setAttribute('aria-hidden', 'true');
-  track.append(mirror);
-  track.style.animationDuration = `${Math.max(20, half.offsetWidth / LEGEND_SPEED_PX_PER_S)}s`;
+  ticker.style.animationDuration = `${Math.max(20, ticker.scrollWidth / 2 / TICKER_SPEED_PX_PER_S)}s`;
 }
 
-setupLegendCarousel();
+setupTicker();
 updateClock();
 render();
 setAvailability(false);

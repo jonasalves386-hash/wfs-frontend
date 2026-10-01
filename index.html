@@ -33,23 +33,10 @@
     <table id="painel" aria-label="Chegadas previstas para os próximos 60 minutos"></table>
   </main>
 
-  <footer class="legend">
-    <!-- Dois grupos idênticos: a faixa desliza metade da largura e reinicia sem salto. -->
-    <div class="legend-track">
-      <div class="legend-group">
-        PAINEL DE CHEGADAS OPERACIONAIS POR VOO E ESCALAÇÃO DAS EQUIPES <span>•</span>
-        AZUL: ESCALADO <span>•</span> VERDE: NA POSIÇÃO <span>•</span>
-        AMARELO: ATENÇÃO <span>•</span> VERMELHO PISCANDO: CRÍTICO <span>•</span> CINZA: SEM SINAL <span>•</span>
-        DESENVOLVIDO POR JONAS E GUSTAVO <span>•</span>
-      </div>
-      <div class="legend-group" aria-hidden="true">
-        PAINEL DE CHEGADAS OPERACIONAIS POR VOO E ESCALAÇÃO DAS EQUIPES <span>•</span>
-        AZUL: ESCALADO <span>•</span> VERDE: NA POSIÇÃO <span>•</span>
-        AMARELO: ATENÇÃO <span>•</span> VERMELHO PISCANDO: CRÍTICO <span>•</span> CINZA: SEM SINAL <span>•</span>
-        DESENVOLVIDO POR JONAS E GUSTAVO <span>•</span>
-      </div>
-    </div>
-  </footer>
+  <div class="ticker">
+    <div class="ticker-tag">SISTEMA</div>
+    <div class="ticker-scroll" id="ticker"></div>
+  </div>
 
   <script src="config.js"></script>
   <script src="panelRules.js"></script>

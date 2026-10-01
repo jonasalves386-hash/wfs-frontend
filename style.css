@@ -91,7 +91,7 @@ body {
 .clock,
 td,
 th,
-.legend {
+.ticker {
   font-family: Consolas, "Courier New", monospace;
 }
 
@@ -256,7 +256,8 @@ td {
   font-size: clamp(20px, 1.45vw, 28px);
 }
 
-.legend {
+.ticker {
+  height: var(--footer-height);
   background: var(--surface);
   border-top: 1px solid var(--border);
   color: #c2c7cf;
@@ -269,31 +270,32 @@ td {
   letter-spacing: 0.35px;
 }
 
-.legend-track {
-  display: flex;
-  flex: none;
-  animation: legend-scroll 45s linear infinite;
-}
-
-.legend-half {
-  display: flex;
-  flex: none;
-}
-
-.legend-group {
+.ticker-tag {
+  height: 100%;
+  padding: 0 10px;
+  border-right: 1px solid var(--border);
+  color: #747b86;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-right: 8px;
+  flex: 0 0 auto;
+  /* Fica acima da faixa para o texto rolando não passar por cima da etiqueta. */
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
 }
 
-.legend span {
-  color: #747b86;
+.ticker-scroll {
+  display: flex;
+  gap: 60px;
+  padding: 0 30px;
+  color: #c2c7cf;
+  animation: ticker-move 50s linear infinite;
+  white-space: nowrap;
 }
 
-@keyframes legend-scroll {
+@keyframes ticker-move {
   from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  to   { transform: translateX(-50%); }
 }
 
 @media (max-width: 1280px) {
