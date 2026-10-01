@@ -66,6 +66,16 @@ function statusCell(status, text = '', extraClass = '') {
   return `<td class="cell-status status-${status} ${extraClass}">${escapeHtml(text)}</td>`;
 }
 
+// Nome da equipe ("NOVEMBER - T3"): com muitas colunas quebra em duas linhas
+// ("NOVEMBER" / "- T3") em vez de cortar; com espaço sobrando fica em uma linha.
+function teamCell(status, teamName, extraClass = '') {
+  const name = String(teamName || '');
+  const split = name.lastIndexOf(' - ');
+  const parts = split > 0 ? [name.slice(0, split), name.slice(split + 1)] : [name];
+  const html = parts.map((part) => `<span class="team-part">${escapeHtml(part)}</span>`).join(' ');
+  return `<td class="cell-status cell-team status-${status} ${extraClass}">${name ? html : ''}</td>`;
+}
+
 function buildRow(label, cells) {
   const tag = label === 'VOO' ? 'th' : 'td';
   return `<tr><${tag} class="row-label" scope="row">${label}</${tag}>${cells}</tr>`;
@@ -88,7 +98,7 @@ function render() {
     FONIA: flights.map((flight) => {
       const status = PanelRules.foniaStatus(flight, nowMs);
       const teamName = status === 'blue' || status === 'green' ? flight.fonia?.teamName : '';
-      return statusCell(status, teamName, 'cell-fonia');
+      return teamCell(status, teamName, 'cell-fonia');
     }).join(''),
     LIMPEZA: flights.map(() => statusCell('gray')).join(''),
     'REST.': flights.map((flight) => statusCell(PanelRules.restStatus(flight, nowMs))).join(''),
@@ -97,7 +107,7 @@ function render() {
     SMARTF: flights.map((flight) => {
       const status = PanelRules.smartFuelStatus(flight, nowMs);
       const teamName = status === 'blue' || status === 'green' ? flight.smartFuel?.teamName : '';
-      return statusCell(status, teamName);
+      return teamCell(status, teamName);
     }).join(''),
   };
 

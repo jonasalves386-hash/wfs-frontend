@@ -226,6 +226,16 @@ td {
   text-transform: uppercase;
 }
 
+.cell-team {
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.team-part {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .status-gray {
   background: var(--gray);
 }
