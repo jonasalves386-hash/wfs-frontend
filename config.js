@@ -1,10 +1,10 @@
 // config.js
 const API_BASE_URL = (() => {
-  const { hostname } = window.location;
+  const { hostname, origin } = window.location;
 
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:3000';
+    return `${origin}/api`;
   }
 
-  return `${window.location.origin}/api`;
+  return `${origin}/api`;
 })();

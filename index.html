@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>WFS Painel de Controle</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>WFS Painel de Chegadas</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- ── HEADER ── -->
   <header class="header">
-    <img class="logo-img" src="assets/LOGOWFS.png" alt="WFS">
+    <img class="logo-img" src="assets/LOGOWFS-COI.png" alt="WFS COI Data Center">
     <div class="logo-info">
       <div class="logo-title">CHEGADA - OPERAÇÃO NARROW BODY</div>
     </div>
@@ -29,18 +29,17 @@
     <div class="clock" id="clock">--:--:--</div>
   </header>
 
-  <!-- ── TABELA TRANSPOSTA ── -->
-  <div class="table-wrap">
-    <table id="painel"></table>
-  </div>
+  <main class="table-wrap">
+    <table id="painel" aria-label="Chegadas previstas para os próximos 60 minutos"></table>
+  </main>
 
-  <!-- ── TICKER ── -->
-  <div class="ticker">
-    <div class="ticker-tag">SISTEMA</div>
-    <div class="ticker-scroll" id="ticker"></div>
-  </div>
+  <footer class="legend">
+    AZUL: ESCALADO <span>•</span> VERDE: NA POSIÇÃO <span>•</span>
+    AMARELO: ATENÇÃO <span>•</span> VERMELHO PISCANDO: CRÍTICO <span>•</span> CINZA: SEM SINAL
+  </footer>
 
   <script src="config.js"></script>
+  <script src="panelRules.js"></script>
   <script src="logica.js" defer></script>
 </body>
 </html>

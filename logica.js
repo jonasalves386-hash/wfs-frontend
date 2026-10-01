@@ -1,389 +1,187 @@
-﻿const API_URL = `${API_BASE_URL}/voos`;
-const SERVICES = ['portas', 'fonia', 'limpeza', 'restituiçao', 'qtu', 'qta', 'smartfuel'];
-const LOTE_SIZE = 15;
-const ROTATION_MS = 60 * 60 * 1000; // 1 hora
-const JANELA_MINUTOS = 60;
+'use strict';
 
-const SVC_LABEL = {
-  portas: 'PORTAS',
-  fonia: 'FONIA',
-  limpeza: 'LIMPEZA',
-  restituiçao: 'REST.',
-  qtu: 'QTU',
-  qta: 'QTA',
-  smartfuel: 'SMARTF',
-};
+const API_URL = `${API_BASE_URL}/chegadas/voos`;
+const POLL_MS = 60000;
+const REQUEST_TIMEOUT_MS = 125000;
+const STORAGE_KEY = 'wfs-chegadas:last-valid-flights';
+const ROWS = ['VOO', 'ORIGEM', 'ETA', 'TEMPO', 'BOX', 'FONIA', 'LIMPEZA', 'REST.', 'QTU', 'QTA', 'SMARTF'];
 
-const STATUS = {
-  NAO:      { label: 'NÃO ESC.',  cls: 'chip-nao'      },
-  ESC:      { label: 'ESCALADO',  cls: 'chip-esc'      },
-  CINZA:    { label: 'PADRÃO',    cls: 'chip-cinza'    },
-  AZUL:     { label: 'ESCALADO',  cls: 'chip-azul'     },
-  AMARELO:  { label: 'ATENÇÃO',   cls: 'chip-amarelo'  },
-  VERMELHO: { label: 'CRÍTICO',   cls: 'chip-vermelho' },
-  VERDE:    { label: 'OK',        cls: 'chip-verde'    },
-};
-
-function minutesTo(date) {
-  return Math.round((date - Date.now()) / 60000);
-}
-
-function fmtTime(d) {
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-}
-
-function fmtTempo(mins) {
-  if (mins <= 0) return `-${Math.abs(mins)}min`;
-  if (mins < 60) return `${mins}min`;
-
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-
-  return m === 0 ? `${h}h` : `${h}h${m}m`;
-}
-
-function tempoClass(mins) {
-  if (mins <= 0) return 't-atrasado';
-  if (mins <= 15) return 't-urgente';
-  if (mins <= 30) return 't-alerta';
-  return 't-normal';
-}
-
-function limpezaStatus(f) {
-  if (f.limpeza?.escalado) return STATUS.AZUL;
-  const mins = minutesTo(f.t);
-  if (mins > 5) return STATUS.CINZA;
-  if (mins > 0) return STATUS.AMARELO;
-  return STATUS.VERMELHO;
-}
-
-
-function minutesSince(timeStr) {
-  const d = montarDataHojePorHorario(timeStr);
-  if (!d) return null;
-  return Math.round((Date.now() - d) / 60000);
-}
-
-function portasStatus(f) {
-  const portas = f.portas;
-
-  // Posicao finger: PORTAS nao e considerado
-  if (portas?.isFinger) return null;
-
-  // Sem calco: inativo
-  if (!portas?.calco) return STATUS.CINZA;
-
-  // Open door registrado
-  if (portas?.openDoor) {
-    // Todos os 3 servicos concluidos -> VERDE
-    if (f.fonia?.escalado && f.limpeza?.escalado) {
-      const minsOpen = minutesSince(portas.openDoor);
-      if (minsOpen !== null && minsOpen <= 3) return STATUS.VERDE;
-      return null; // deveRemoverVoo tira da tela apos 3 min
-    }
-    return STATUS.AZUL; // porta aberta, aguardando fonia/limpeza
+function loadStoredFlights() {
+  try {
+    const payload = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return Array.isArray(payload) ? payload.map(normalizeFlight) : [];
+  } catch {
+    return [];
   }
-
-  // Calco registrado, sem open door: baseado no tempo desde o calco
-  const minsCalco = minutesSince(portas.calco);
-  if (minsCalco !== null && minsCalco >= 5) return STATUS.VERMELHO;
-  return STATUS.AMARELO;
-}
-function statusServicoVisual(f, svc) {
-  const servico = f[svc];
-
-  if (servico?.escalado) return STATUS.AZUL;
-
-  const mins = minutesTo(f.t);
-
-  if (mins > 5) return STATUS.CINZA;
-
-  return STATUS.AMARELO;
 }
 
-function isPending(f) {
-  return Object.values(f.s).some(v => v === 'NAO');
-}
-
-function allEscalado(f) {
-  return Object.values(f.s).every(v => v === 'ESC');
-}
-
-function isHorarioValido(h) {
-  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(String(h || '').trim());
-}
-
-function montarDataHojePorHorario(horario) {
-  const horarioLimpo = String(horario || '').trim();
-
-  if (!isHorarioValido(horarioLimpo)) return null;
-
-  const [h, m] = horarioLimpo.split(':').map(Number);
-
-  const data = new Date();
-  data.setHours(h, m, 0, 0);
-
-  return data;
-}
-
-function estaNaJanelaOperacional(dataVoo) {
-  const diffMin = minutesTo(dataVoo);
-
-  return diffMin >= -JANELA_MINUTOS && diffMin <= JANELA_MINUTOS;
-}
-
-function deveRemoverVoo(f) {
-  // Finger: sai com fonia + limpeza apos ETA zerado (sem open door)
-  if (f.portas?.isFinger) {
-    const mins = minutesTo(f.t);
-    return mins <= 0 && !!(f.fonia?.escalado && f.limpeza?.escalado);
+function storeFlights(payload) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // O cache do navegador é apenas uma proteção de recarga; a API continua sendo a fonte oficial.
   }
-  // Normal: sai apenas com open door + fonia + limpeza + 3 min verde
-  if (!f.portas?.openDoor) return false;
-  if (!f.fonia?.escalado || !f.limpeza?.escalado) return false;
-  const minsOpen = minutesSince(f.portas.openDoor);
-  return minsOpen !== null && minsOpen > 3;
 }
 
-function adaptarVoos(apiVoos) {
-  return apiVoos
-    .map(v => {
-      const horario = String(v.horario || '').trim().slice(0,5);
-      const calco = String(v.calco || '').trim();
+let lastValidFlights = loadStoredFlights();
+let requestInProgress = false;
 
-      const data = montarDataHojePorHorario(horario);
-
-      if (!data) {
-  console.warn('VOO IGNORADO POR HORARIO INVALIDO:', v);
-  return null;
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
-console.log('VOOS RECEBIDOS FRONT:', apiVoos.length);
-
-      return {
-        id: String(v.voo || '').trim(),
-        voo: String(v.voo || '').trim(),
-        route: String(v.origem || '').trim() || '-',
-        t: data,
-        calco: v.calco || null,
-        fonia: v.servicos?.fonia ?? { escalado: false, valor: '' },
-        limpeza: v.servicos?.limpeza ?? { escalado: false, valor: '' },
-        qta: v.servicos?.qta ?? { escalado: false, valor: '' },
-        qtu: v.servicos?.qtu ?? { escalado: false, valor: '' },
-        smartfuel: v.servicos?.smartfuel ?? { escalado: false, valor: '' },
-        restituiçao: v.servicos?.restituiçao ?? { escalado: false, valor: '' },
-        portas: v.servicos?.portas ?? { calco: null, openDoor: null, isFinger: false },
-        s: {
-          portas: 'ESC',
-          limpeza: 'ESC',
-          qtu: 'ESC',
-          qta: 'ESC',
-          fonia: 'ESC',
-          smartfuel: 'ESC',
-          restituiçao: 'ESC',
-        },
-      };
-    })
-    .filter(Boolean)
-    .filter(f => !deveRemoverVoo(f))
-    .sort((a, b) => a.t - b.t)
-    .slice(0, LOTE_SIZE);
-}
-
-let allFlights = [];
-let currentLote = [];
-let nextRotation = Date.now() + ROTATION_MS;
-
-function foniaStatus(f) {
-  if (f.fonia?.escalado) return STATUS.AZUL;
-
-  const mins = minutesTo(f.t);
-
-  if (mins > 30) return STATUS.CINZA;
-  if (mins > 5) return STATUS.AMARELO;
-  return STATUS.VERMELHO;
-}
-
-function buildLote() {
-  return [...allFlights]
-    .sort((a, b) => a.t - b.t)
-    .slice(0, LOTE_SIZE)
-    .map(f => f.id);
-}
-
-function rotateLote() {
-  const exibidos = new Set(currentLote);
-
-  const pendentes = currentLote.filter(id => {
-    const f = allFlights.find(x => x.id === id);
-    return f && !allEscalado(f);
+function formatEta(value) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '';
+  return date.toLocaleTimeString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
   });
-
-  const proximos = allFlights
-    .filter(f => !exibidos.has(f.id))
-    .sort((a, b) => a.t - b.t)
-    .map(f => f.id);
-
-  currentLote = [...pendentes, ...proximos].slice(0, LOTE_SIZE);
-  nextRotation = Date.now() + ROTATION_MS;
 }
 
-function getSortedLote() {
-  return currentLote
-    .map(id => allFlights.find(f => f.id === id))
-    .filter(Boolean)
-    .filter(f => !deveRemoverVoo(f))
-    .sort((a, b) => a.t - b.t)
-    .slice(0, LOTE_SIZE);
+function formatRemaining(minutes) {
+  if (minutes === null) return '';
+  if (minutes < 60) return `${Math.max(0, minutes)}min`;
+  return '1h';
+}
+
+function timeClass(minutes) {
+  if (minutes <= 5) return 'time-critical';
+  if (minutes <= 15) return 'time-warning';
+  return 'time-normal';
+}
+
+function infoCell(value, extraClass = '') {
+  return `<td class="cell-info ${extraClass}">${escapeHtml(value)}</td>`;
+}
+
+function statusCell(status, text = '', extraClass = '') {
+  return `<td class="cell-status status-${status} ${extraClass}">${escapeHtml(text)}</td>`;
+}
+
+function buildRow(label, cells) {
+  const tag = label === 'VOO' ? 'th' : 'td';
+  return `<tr><${tag} class="row-label" scope="row">${label}</${tag}>${cells}</tr>`;
 }
 
 function render() {
-  const flights = getSortedLote();
-  const pending = flights.filter(isPending).length;
+  const nowMs = Date.now();
+  const flights = PanelRules.visibleFlights(lastValidFlights, nowMs);
+  document.getElementById('cnt-total').textContent = String(flights.length);
 
-  document.getElementById('cnt-total').textContent = flights.length;
+  const values = {
+    VOO: flights.map((flight) => `<th class="flight-number" scope="col">${escapeHtml(flight.flightNumber)}</th>`).join(''),
+    ORIGEM: flights.map((flight) => infoCell(flight.origin)).join(''),
+    ETA: flights.map((flight) => infoCell(formatEta(flight.eta))).join(''),
+    TEMPO: flights.map((flight) => {
+      const minutes = PanelRules.minutesUntil(flight.eta, nowMs);
+      return infoCell(formatRemaining(minutes), `cell-time ${timeClass(minutes)}`);
+    }).join(''),
+    BOX: flights.map((flight) => statusCell('gray', flight.box, 'cell-gate')).join(''),
+    FONIA: flights.map((flight) => {
+      const status = PanelRules.foniaStatus(flight, nowMs);
+      const teamName = status === 'blue' || status === 'green' ? flight.fonia?.teamName : '';
+      return statusCell(status, teamName, 'cell-fonia');
+    }).join(''),
+    LIMPEZA: flights.map(() => statusCell('gray')).join(''),
+    'REST.': flights.map((flight) => statusCell(PanelRules.restStatus(flight, nowMs))).join(''),
+    QTU: flights.map(() => statusCell('gray')).join(''),
+    QTA: flights.map(() => statusCell('gray')).join(''),
+    SMARTF: flights.map((flight) => {
+      const status = PanelRules.smartFuelStatus(flight, nowMs);
+      const teamName = status === 'blue' || status === 'green' ? flight.smartFuel?.teamName : '';
+      return statusCell(status, teamName);
+    }).join(''),
+  };
 
-  const colPending = {};
-  flights.forEach(f => {
-    colPending[f.id] = isPending(f);
-  });
-
-  const table = document.getElementById('painel');
-  const rows = [];
-
-  const thVoos = flights.map(f => {
-    const cls = colPending[f.id] ? 'col-voo has-pending' : 'col-voo';
-    return `<th class="${cls}">${f.id}</th>`;
-  }).join('');
-
-  rows.push(`<tr><th class="row-label">VOO</th>${thVoos}</tr>`);
-
-  const tdOrigem = flights.map(f =>
-    `<td class="cell-info">${f.route}</td>`
-  ).join('');
-
-  rows.push(`<tr><td class="row-label">ORIGEM</td>${tdOrigem}</tr>`);
-
-  const tdSta = flights.map(f =>
-    `<td class="cell-info">${fmtTime(f.t)}</td>`
-  ).join('');
-
-  rows.push(`<tr><td class="row-label">ETA</td>${tdSta}</tr>`);
-
-  const tdTempo = flights.map(f => {
-    const mins = minutesTo(f.t);
-    const cls = tempoClass(mins);
-    return `<td class="cell-info cell-tempo ${cls}">${fmtTempo(mins)}</td>`;
-  }).join('');
-
-  rows.push(`<tr><td class="row-label">TEMPO</td>${tdTempo}</tr>`);
-
-  const sepCols = flights.map(() => '<td></td>').join('');
-  rows.push(`<tr class="sep-row"><td></td>${sepCols}</tr>`);
-
-  SERVICES.forEach(svc => {
-    const tds = flights.map(f => {
-      let st;
-
-if (svc === 'portas') {
-  st = portasStatus(f);
+  document.getElementById('painel').innerHTML = ROWS.map((label) => buildRow(label, values[label])).join('');
 }
-else if (svc === 'fonia') {
-  st = foniaStatus(f);
-}
-else if (svc === 'limpeza') {
-  st = limpezaStatus(f);
-} 
-else if (
-  svc === 'qta' ||
-  svc === 'qtu' ||
-  svc === 'smartfuel' ||
-  svc === 'restituiçao'
-)
-
-{
-  st = statusServicoVisual(f, svc);
-} else {
-  st = STATUS[f.s[svc]] || STATUS.ESC;
-}
-
-      const col = colPending[f.id] ? 'cell-svc col-pending' : 'cell-svc';
-
-      const chipHtml = st ? `<div class="chip ${st.cls}">${st.label}</div>` : ``;
-      return `<td class="${col}">${chipHtml}</td>`;
-    }).join('');
-
-    rows.push(`<tr><td class="row-label">${SVC_LABEL[svc]}</td>${tds}</tr>`);
-  });
-
-  table.innerHTML = rows.join('');
-}
-
-const msgs = [
-  'WFS · PAINEL DE CONTROLE OPERACIONAL · GRU',
-  'LATAM CHEGADA',
-  'ROTAÇÃO AUTOMÁTICA A CADA 1 HORA',
-  'VERMELHO = CRÍTICO · AMARELO = ATENÇÃO · AZUL = ESCALADO · CINZA = FORA DA JANELA',
-];
-
-document.getElementById('ticker').innerHTML =
-  [...msgs, ...msgs].map(m => `<span>${m}</span>`).join('');
 
 function updateClock() {
-  document.getElementById('clock').textContent =
-    new Date().toLocaleTimeString('pt-BR');
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour12: false,
+  });
+}
+
+function setAvailability(available) {
+  const live = document.querySelector('.live');
+  const label = document.querySelector('.live-text');
+  live.classList.toggle('unavailable', !available);
+  label.textContent = available ? 'AO VIVO' : 'ATUALIZAÇÃO INDISPONÍVEL';
+}
+
+function normalizeFlight(raw) {
+  return {
+    operationId: String(raw.id || ''),
+    serviceKey: String(raw.serviceKey || ''),
+    flightNumber: String(raw.flightNumber || ''),
+    origin: String(raw.origin || ''),
+    eta: raw.eta || null,
+    box: String(raw.box || ''),
+    paxDoorOpen: String(raw.paxDoorOpen || ''),
+    onChock: raw.chocksOn ? true : null,
+    doorOpen: Boolean(raw.gateOpen),
+    fonia: {
+      integrated: raw.fonia?.integrated === true,
+      teamName: String(raw.fonia?.teamName || ''),
+      inPosition: Boolean(raw.fonia?.inPosition),
+    },
+    rest: {
+      integrated: raw.rest?.integrated === true,
+      assigned: Boolean(raw.rest?.assigned),
+    },
+    smartFuel: {
+      integrated: raw.smartFuel?.integrated === true,
+      assigned: Boolean(raw.smartFuel?.assigned),
+      completed: Boolean(raw.smartFuel?.completed),
+      teamName: String(raw.smartFuel?.teamName || ''),
+    },
+  };
 }
 
 async function fetchFlights() {
+  if (requestInProgress) return;
+  requestInProgress = true;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   try {
-    const res = await fetch(`${API_URL}?t=${Date.now()}`, {
-      cache: 'no-store'
+    const response = await fetch(`${API_URL}?t=${Date.now()}`, {
+      cache: 'no-store',
+      signal: controller.signal,
     });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json();
+    if (!Array.isArray(payload)) throw new Error('Formato inesperado: a API não retornou uma lista');
 
-    if (!res.ok) {
-      throw new Error(`Erro HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      console.error('Formato inesperado da API:', data);
-      allFlights = [];
-      currentLote = [];
-      render();
-      return;
-    }
-
-    allFlights = adaptarVoos(data);
-    currentLote = buildLote();
-
-    console.log('TOTAL API:', data.length);
-    console.log('VOOS FILTRADOS:', allFlights.length);
-    console.log('VOOS NA TELA:', currentLote.length);
-
+    lastValidFlights = payload.map(normalizeFlight);
+    storeFlights(payload);
+    setAvailability(response.headers.get('X-Data-Stale') !== 'true');
     render();
-
-  } catch (err) {
-    console.error('Erro ao buscar voos:', err);
+  } catch (error) {
+    console.error('[Painel de Chegadas] atualização remota falhou; último estado preservado.', error);
+    setAvailability(false);
+  } finally {
+    clearTimeout(timeout);
+    requestInProgress = false;
   }
 }
 
-currentLote = [];
-nextRotation = Date.now() + ROTATION_MS;
-
-fetchFlights();
 updateClock();
-
-setInterval(updateClock, 1000);
-setInterval(fetchFlights, 30000);
+render();
+setAvailability(false);
+fetchFlights();
 
 setInterval(() => {
-  if (Date.now() >= nextRotation) rotateLote();
+  updateClock();
   render();
-}, 30000);
-
-// setInterval(() => {
-//   console.log('🔄 Auto reload da página (15 min)');
-//   location.reload();
-// }, 15 * 60 * 1000); // 15 minutos
-// ok
+}, 1000);
+setInterval(fetchFlights, POLL_MS);
