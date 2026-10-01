@@ -229,6 +229,7 @@ td {
 .cell-team {
   white-space: normal;
   line-height: 1.15;
+  font-size: clamp(16px, 1.25vw, 26px);
 }
 
 .team-part {
