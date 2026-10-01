@@ -4,7 +4,7 @@ const API_URL = `${API_BASE_URL}/chegadas/voos`;
 const POLL_MS = 60000;
 const REQUEST_TIMEOUT_MS = 125000;
 const STORAGE_KEY = 'wfs-chegadas:last-valid-flights';
-const ROWS = ['VOO', 'ORIGEM', 'ETA', 'TEMPO', 'BOX', 'FONIA', 'LIMPEZA', 'REST.', 'QTU', 'QTA', 'SMARTF'];
+const ROWS = ['VOO', 'ORIGEM', 'ETA', 'TEMPO', 'BOX', 'FONIA', 'SMARTF', 'LIMPEZA', 'REST.', 'QTU', 'QTA'];
 
 function loadStoredFlights() {
   try {
@@ -175,6 +175,34 @@ async function fetchFlights() {
   }
 }
 
+// Rodapé em carrossel: repete o texto até cada metade da faixa cobrir a tela
+// (sem buraco no fim do ciclo) e mantém a velocidade de leitura constante.
+const LEGEND_SPEED_PX_PER_S = 40;
+
+function setupLegendCarousel() {
+  const footer = document.querySelector('.legend');
+  const track = footer?.querySelector('.legend-track');
+  const template = track?.querySelector('.legend-group');
+  if (!template) return;
+
+  track.querySelectorAll('.legend-group:not(:first-child)').forEach((group) => group.remove());
+  const half = document.createElement('div');
+  half.className = 'legend-half';
+  half.append(template);
+  while (half.offsetWidth < footer.clientWidth || half.children.length === 1) {
+    const copy = template.cloneNode(true);
+    copy.setAttribute('aria-hidden', 'true');
+    half.append(copy);
+    track.append(half);
+    if (half.offsetWidth === 0) break;
+  }
+  const mirror = half.cloneNode(true);
+  mirror.setAttribute('aria-hidden', 'true');
+  track.append(mirror);
+  track.style.animationDuration = `${Math.max(20, half.offsetWidth / LEGEND_SPEED_PX_PER_S)}s`;
+}
+
+setupLegendCarousel();
 updateClock();
 render();
 setAvailability(false);
