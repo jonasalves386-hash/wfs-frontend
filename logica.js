@@ -76,6 +76,13 @@ function teamCell(status, teamName, extraClass = '') {
   return `<td class="cell-status cell-team status-${status} ${extraClass}">${name ? html : ''}</td>`;
 }
 
+// Remove só na tela o prefixo inicial "LA" (LA1300 → 1300); o valor original
+// continua no estado, no cache e nos cruzamentos.
+function displayFlightNumber(value) {
+  const text = String(value ?? '');
+  return /^la/i.test(text) ? text.slice(2) : text;
+}
+
 function buildRow(label, cells) {
   const tag = label === 'VOO' ? 'th' : 'td';
   return `<tr><${tag} class="row-label" scope="row">${label}</${tag}>${cells}</tr>`;
@@ -87,7 +94,12 @@ function render() {
   document.getElementById('cnt-total').textContent = String(flights.length);
 
   const values = {
-    VOO: flights.map((flight) => `<th class="flight-number" scope="col">${escapeHtml(flight.flightNumber)}</th>`).join(''),
+    VOO: flights.map((flight) => {
+      const label = displayFlightNumber(flight.flightNumber);
+      // Identificadores longos (ex.: XLA1300) usam fonte menor para caber na coluna.
+      const longClass = label.length > 5 ? ' flight-number-long' : '';
+      return `<th class="flight-number${longClass}" scope="col">${escapeHtml(label)}</th>`;
+    }).join(''),
     ORIGEM: flights.map((flight) => infoCell(flight.origin)).join(''),
     ETA: flights.map((flight) => infoCell(formatEta(flight.eta))).join(''),
     TEMPO: flights.map((flight) => {
