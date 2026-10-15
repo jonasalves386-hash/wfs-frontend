@@ -7,6 +7,7 @@
 
   const WINDOW_MINUTES = 60;
   const MAX_FLIGHTS = 12;
+  const HOLD_MAX_MINUTES = 180;
 
   function timestamp(value) {
     const parsed = Date.parse(value || '');
@@ -24,6 +25,8 @@
         const etaMs = timestamp(flight.eta);
         if (etaMs === null) return false;
         const exactMinutes = (etaMs - nowMs) / 60000;
+        // Travado pelo backend (sem "na posição" na Fonia): continua na tela.
+        if (flight.held) return exactMinutes >= -HOLD_MAX_MINUTES;
         return exactMinutes >= 0
           && exactMinutes <= WINDOW_MINUTES
           && !flight.onChock

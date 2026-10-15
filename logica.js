@@ -48,7 +48,9 @@ function formatEta(value) {
 
 function formatRemaining(minutes) {
   if (minutes === null) return '';
-  if (minutes < 60) return `${Math.max(0, minutes)}min`;
+  // Negativo = voo travado após o ETA aguardando "na posição" da Fonia.
+  if (minutes < 0) return `-${Math.abs(minutes)}min`;
+  if (minutes < 60) return `${minutes}min`;
   return '1h';
 }
 
@@ -151,6 +153,7 @@ function normalizeFlight(raw) {
     paxDoorOpen: String(raw.paxDoorOpen || ''),
     onChock: raw.chocksOn ? true : null,
     doorOpen: Boolean(raw.gateOpen),
+    held: raw.held === true,
     fonia: {
       integrated: raw.fonia?.integrated === true,
       teamName: String(raw.fonia?.teamName || ''),
