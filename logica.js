@@ -119,9 +119,12 @@ function render() {
       const status = PanelRules.restStatus(flight, nowMs);
       return teamCell(status, status === 'blue' ? flight.rest?.operatorName : '');
     }).join(''),
-    // ESCADA e CONVEYOR: cinza até as APIs entrarem.
-    ESCADA: flights.map(() => statusCell('gray')).join(''),
-    CONVEYOR: flights.map(() => statusCell('gray')).join(''),
+    // ESCADA e CONVEYOR: checklist da Fonia (verde confirmado, alerta pelo ETA).
+    ESCADA: flights.map((flight) => statusCell(PanelRules.equipmentStatus(flight.stairs, flight, nowMs))).join(''),
+    CONVEYOR: flights.map((flight) => {
+      const status = PanelRules.equipmentStatus(flight.conveyor, flight, nowMs);
+      return statusCell(status, status === 'green' ? flight.conveyor.label : '');
+    }).join(''),
   };
 
   document.getElementById('painel').innerHTML = ROWS.map((label) => buildRow(label, values[label])).join('');
@@ -157,6 +160,17 @@ function normalizeFlight(raw) {
       integrated: raw.fonia?.integrated === true,
       teamName: String(raw.fonia?.teamName || ''),
       inPosition: Boolean(raw.fonia?.inPosition),
+    },
+    stairs: {
+      integrated: raw.stairs?.integrated === true,
+      required: raw.stairs?.required === true ? true : raw.stairs?.required === false ? false : null,
+      confirmed: raw.stairs?.confirmed === true,
+    },
+    conveyor: {
+      integrated: raw.conveyor?.integrated === true,
+      required: raw.conveyor?.required === true ? true : raw.conveyor?.required === false ? false : null,
+      confirmed: raw.conveyor?.confirmed === true,
+      label: String(raw.conveyor?.label || ''),
     },
     rest: {
       integrated: raw.rest?.integrated === true,

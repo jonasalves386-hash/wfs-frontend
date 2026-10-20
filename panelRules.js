@@ -66,6 +66,17 @@
     return 'gray';
   }
 
+  // ESCADA/CONVEYOR: verde confirmado; pendente amarelo <= 10 min e vermelho
+  // piscando <= 5 min; cinza antes disso, quando não obrigatório ou sem dado.
+  function equipmentStatus(item, flight, nowMs = Date.now()) {
+    if (notIntegrated(item) || item?.required !== true) return 'gray';
+    if (item.confirmed) return 'green';
+    const minutes = minutesUntil(flight.eta, nowMs);
+    if (minutes <= 5) return 'red';
+    if (minutes <= 10) return 'yellow';
+    return 'gray';
+  }
+
   function smartFuelStatus(flight, nowMs = Date.now()) {
     if (notIntegrated(flight.smartFuel)) return 'gray';
     if (flight.smartFuel?.completed) return 'green';
@@ -83,5 +94,6 @@
     foniaStatus,
     restStatus,
     smartFuelStatus,
+    equipmentStatus,
   };
 }));
