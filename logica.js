@@ -4,7 +4,7 @@ const API_URL = `${API_BASE_URL}/chegadas/voos`;
 const POLL_MS = 60000;
 const REQUEST_TIMEOUT_MS = 125000;
 const STORAGE_KEY = 'wfs-chegadas:last-valid-flights';
-const ROWS = ['VOO', 'ORIGEM', 'ETA', 'TEMPO', 'BOX', 'FONIA', 'SMARTF', 'LIMPEZA', 'REST.', 'QTU', 'QTA'];
+const ROWS = ['VOO', 'ORIGEM', 'ETA', 'TEMPO', 'BOX', 'FONIA', 'LIMPEZA', 'REST.', 'ESCADA', 'CONVEYOR'];
 
 function loadStoredFlights() {
   try {
@@ -116,13 +116,9 @@ function render() {
     }).join(''),
     LIMPEZA: flights.map(() => statusCell('gray')).join(''),
     'REST.': flights.map((flight) => statusCell(PanelRules.restStatus(flight, nowMs))).join(''),
-    QTU: flights.map(() => statusCell('gray')).join(''),
-    QTA: flights.map(() => statusCell('gray')).join(''),
-    SMARTF: flights.map((flight) => {
-      const status = PanelRules.smartFuelStatus(flight, nowMs);
-      const teamName = status === 'blue' || status === 'green' ? flight.smartFuel?.teamName : '';
-      return teamCell(status, teamName);
-    }).join(''),
+    // ESCADA e CONVEYOR: cinza até as APIs entrarem.
+    ESCADA: flights.map(() => statusCell('gray')).join(''),
+    CONVEYOR: flights.map(() => statusCell('gray')).join(''),
   };
 
   document.getElementById('painel').innerHTML = ROWS.map((label) => buildRow(label, values[label])).join('');
