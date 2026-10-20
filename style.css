@@ -262,6 +262,16 @@ td {
   animation: critical-blink 0.8s steps(1, end) infinite;
 }
 
+.status-yellow-blink {
+  background: var(--yellow);
+  animation: warning-blink 0.8s steps(1, end) infinite;
+}
+
+@keyframes warning-blink {
+  0%, 48%, 100% { background: var(--yellow); }
+  49%, 99% { background: #6b6104; }
+}
+
 @keyframes critical-blink {
   0%, 48%, 100% { background: var(--red); }
   49%, 99% { background: #6c1118; }
@@ -325,7 +335,8 @@ td {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .status-red {
+  .status-red,
+  .status-yellow-blink {
     animation-duration: 1.6s;
   }
 }

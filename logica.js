@@ -115,7 +115,10 @@ function render() {
       return teamCell(status, teamName, 'cell-fonia');
     }).join(''),
     LIMPEZA: flights.map(() => statusCell('gray')).join(''),
-    'REST.': flights.map((flight) => statusCell(PanelRules.restStatus(flight, nowMs))).join(''),
+    'REST.': flights.map((flight) => {
+      const status = PanelRules.restStatus(flight, nowMs);
+      return teamCell(status, status === 'blue' ? flight.rest?.operatorName : '');
+    }).join(''),
     // ESCADA e CONVEYOR: cinza até as APIs entrarem.
     ESCADA: flights.map(() => statusCell('gray')).join(''),
     CONVEYOR: flights.map(() => statusCell('gray')).join(''),
@@ -158,6 +161,7 @@ function normalizeFlight(raw) {
     rest: {
       integrated: raw.rest?.integrated === true,
       assigned: Boolean(raw.rest?.assigned),
+      operatorName: String(raw.rest?.operatorName || ''),
     },
     smartFuel: {
       integrated: raw.smartFuel?.integrated === true,

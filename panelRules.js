@@ -55,10 +55,15 @@
     return pendingStatus(minutesUntil(flight.eta, nowMs));
   }
 
+  // REST.: azul escalado; sem escala, amarelo piscando a <= 5 min, vermelho
+  // piscando com o ETA zerado; cinza antes disso e para voo sem registro.
   function restStatus(flight, nowMs = Date.now()) {
     if (notIntegrated(flight.rest)) return 'gray';
     if (flight.rest?.assigned) return 'blue';
-    return pendingStatus(minutesUntil(flight.eta, nowMs));
+    const minutes = minutesUntil(flight.eta, nowMs);
+    if (minutes <= 0) return 'red';
+    if (minutes <= 5) return 'yellow-blink';
+    return 'gray';
   }
 
   function smartFuelStatus(flight, nowMs = Date.now()) {
